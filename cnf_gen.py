@@ -5,6 +5,14 @@ url: https://github.com/pucrs-automated-planning/pddl-parser
 commit id: 38cc9aa48208d396f4373198ef354918f548e7de
 '''
 
+'''
+Todos:
+  - Add clause generator function
+  - Add boolean variable creator function
+  - Update to include propagated boolean variable in time ("untouched" by action)
+'''
+
+
 from PDDL import PDDL_Parser
 
 '''
@@ -40,12 +48,18 @@ def constraints(domain, problem):
   return clause_list
 
 if __name__ == '__main__':
-    import sys, time
-    start_time = time.time()
-    domain = sys.argv[1]
-    problem = sys.argv[2]
-    clause_list = constraints(domain, problem)
-    print('Time: ' + str(time.time() - start_time) + 's')
-    print('clauses:')
-    for clause in clause_list:
-       print(clause)
+  import sys, time
+  #start_time = time.time()
+  domain = sys.argv[1]
+  problem = sys.argv[2]
+  clause_list = constraints(domain, problem)
+  #print('Time: ' + str(time.time() - start_time) + 's')
+
+  initial_state = clause_list.pop(0)
+  print("Initial state: ", initial_state)
+  goal_state = clause_list.pop(0)
+  print("Goal state: ", goal_state)
+
+  print('clauses:')
+  for clause in clause_list:
+     print(clause)
