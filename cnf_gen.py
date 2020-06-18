@@ -7,8 +7,8 @@ commit id: 38cc9aa48208d396f4373198ef354918f548e7de
 
 '''
 Todos:
-  - Add clause generator function
-  - Add boolean variable creator function
+  - generate cnf for actions
+  - add exactly one constraints for moves
   - Update to include propagated boolean variable in time ("untouched" by action)
 '''
 
