@@ -47,8 +47,17 @@ def constraints(domain, problem):
     clause_list.append(act)
   return clause_list
 
-def make_boolvar(tup, i):
+def make_pboolvar(tup, i):
   var = ''
+  for ele in tup:
+    var = var + str(ele) + '_'
+    #print(ele)
+  var = var + str(i)
+  #print(var)
+  return var
+
+def make_nboolvar(tup, i):
+  var = '-'
   for ele in tup:
     var = var + str(ele) + '_'
     #print(ele)
@@ -63,25 +72,32 @@ time step is considered 1:
 def initial_state_cnf_gen(state):
   initial_clauses = []
   for atom in state:
-    var = make_boolvar(atom,1)
+    var = make_pboolvar(atom,1)
     initial_clauses.append(var)
   return initial_clauses
 
-def goal_state_cnf_gen(state):
-  print(state)
-  return []
+def goal_state_cnf_gen(state,k):
+  goal_pos = state[0]
+  goal_neg = state[1]
+  goal_clauses = []
+  for atom in goal_pos:
+    var = make_pboolvar(atom,k)
+    goal_clauses.append(var)
+  for atom in goal_neg:
+    var = make_nboolvar(atom,k)
+    goal_clauses.append(var)
+  return goal_clauses
 
 def act_cnf_gen(constraints_list):
   return []
 
-def cnfgen(constraint_list):
+def cnfgen(constraint_list, k):
   initial_state = constraint_list.pop(0)
-  #print("Initial state: ", initial_state)
   initial_clauses = initial_state_cnf_gen(initial_state)
   print(initial_clauses)
   goal_state = constraint_list.pop(0)
-  goal_state_cnf_gen(goal_state)
-  #print("Goal state: ", goal_state)
+  goal_clauses = goal_state_cnf_gen(goal_state, k)
+  print(goal_clauses)
 
   #print('clauses:')
   #for clause in constraint_list:
@@ -93,8 +109,9 @@ if __name__ == '__main__':
   #start_time = time.time()
   domain = sys.argv[1]
   problem = sys.argv[2]
+  k = int(sys.argv[3])
   constraint_list = constraints(domain, problem)
   #print('Time: ' + str(time.time() - start_time) + 's')
 
-  cnf = cnfgen(constraint_list)
+  cnf = cnfgen(constraint_list,k)
   print(cnf)
