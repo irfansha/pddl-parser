@@ -51,6 +51,8 @@ def constraints(domain, problem):
   return clause_list
 #-------------------------------------------------------------------------------------------
 
+# Boolean variable generators:
+#-------------------------------------------------------------------------------------------
 def make_pboolvar(tup, i):
   var = ''
   for ele in tup:
@@ -69,6 +71,16 @@ def make_nboolvar(tup, i):
   #print(var)
   return var
 
+def extract_var(var):
+  if var[0] == '-':
+    return (0,var[1:])
+  else:
+    return (1,var)
+
+#-------------------------------------------------------------------------------------------
+
+# Clauses generator:
+#-------------------------------------------------------------------------------------------
 '''
 Generates clauses with boolean variables for initial state,
 time step is considered 1:
@@ -121,6 +133,74 @@ def clause_gen(constraint_list, k):
     temp_act_imp_clauses = act_imp_clauses_gen(constraint_list, i)
     act_imp_clauses.append(temp_act_imp_clauses)
   return [initial_clauses, goal_clauses, act_imp_clauses]
+#-------------------------------------------------------------------------------------------
+
+# Making clauses/variables integer:
+#-------------------------------------------------------------------------------------------
+def make_clauses_integer(clauses):
+  integer_clauses = []
+  var_map = {}
+  count = 1
+  initial_clauses = clauses.pop(0)
+  #print("Initial clauses: ", initial_clauses)
+  temp_int_initial_clauses = []
+  for clause in initial_clauses:
+    # checking if the variable is postive:
+    (pos,var) = extract_var(clause)
+    # Assuming the initial conditions are non-repeatitive:
+    var_map[var] = count
+    count = count + 1
+    if pos:
+      temp_int_initial_clauses.append(var_map[var])
+    else:
+      # Initial clauses do not seem to have negative atoms,
+      # adding for generality:
+      temp_int_initial_clauses.append(-var_map[var])
+  integer_clauses.append(temp_int_initial_clauses)
+
+  # Assuming atleast one step is needed i.e. k > 1:
+  goal_clauses = clauses.pop(0)
+  #print("Goal clauses: ", goal_clauses)
+  temp_int_goal_clauses = []
+  for clause in goal_clauses:
+    # checking if the variable is postive:
+    (pos,var) = extract_var(clause)
+    # Assuming the goal conditions are non-repeatitive:
+    var_map[var] = count
+    count = count + 1
+    if pos:
+      temp_int_goal_clauses.append(var_map[var])
+    else:
+      temp_int_goal_clauses.append(-var_map[var])
+  integer_clauses.append(temp_int_goal_clauses)
+
+  imp_clauses = clauses.pop(0)
+  temp_int_imp_clauses = []
+  for imp in imp_clauses:
+    temp_step_int_clauses = []
+    for clause in imp:
+      var = clause[0]
+      if var not in var_map:
+        var_map[var] = count
+        count = count + 1
+      temp_action = var_map[var]
+      temp_int_then_clauses = []
+      for temp_clause in clause[1]:
+        (pos,var) = extract_var(temp_clause)
+        if var not in var_map:
+          var_map[var] = count
+          count = count + 1
+        if pos:
+          temp_int_then_clauses.append(var_map[var])
+        else:
+          temp_int_then_clauses.append(-var_map[var])
+      temp_step_int_clauses.append([temp_action, temp_int_then_clauses])
+    temp_int_imp_clauses.append(temp_step_int_clauses)
+  integer_clauses.append(temp_int_imp_clauses)
+  return integer_clauses
+
+#-------------------------------------------------------------------------------------------
+
 
 if __name__ == '__main__':
   import sys, time
@@ -132,13 +212,4 @@ if __name__ == '__main__':
   #print('Time: ' + str(time.time() - start_time) + 's')
   # initial, goal and actions clauses as a list of lists:
   clauses = clause_gen(constraint_list,k)
-  initial_clauses = clauses.pop(0)
-  print("Initial clauses: ", initial_clauses)
-  goal_clauses = clauses.pop(0)
-  print("Goal clauses: ", goal_clauses)
-  imp_clauses = clauses.pop(0)
-  print("action clauses: ")
-  for imp in imp_clauses:
-    for clause in imp:
-      print("If: ", clause[0])
-      print("Then:", clause[1])
+  integer_clauses = make_clauses_integer(clauses)
