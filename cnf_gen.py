@@ -7,7 +7,6 @@ commit id: 38cc9aa48208d396f4373198ef354918f548e7de
 
 '''
 Todos:
-  - update variables to integers to suit cnf format
   - add if then statement expansion for cnf format
   - add exactly one constraints for moves
   - Update to include propagated boolean variable in time ("untouched" by action)
