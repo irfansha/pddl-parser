@@ -7,7 +7,8 @@ commit id: 38cc9aa48208d396f4373198ef354918f548e7de
 
 '''
 Todos:
-  - update the number of steps for actions from one to k-1
+  - update variables to integers to suit cnf format
+  - add if then statement expansion for cnf format
   - add exactly one constraints for moves
   - Update to include propagated boolean variable in time ("untouched" by action)
 '''
@@ -15,6 +16,8 @@ Todos:
 
 from PDDL import PDDL_Parser
 
+# state extraction from pddl domain and problem:
+#-------------------------------------------------------------------------------------------
 '''
 Takes domain and problem as input and generates list of
 - initial state
@@ -46,6 +49,7 @@ def constraints(domain, problem):
   for act in ground_actions:
     clause_list.append(act)
   return clause_list
+#-------------------------------------------------------------------------------------------
 
 def make_pboolvar(tup, i):
   var = ''
@@ -104,8 +108,6 @@ def act_imp_clauses_gen(constraints_list,i):
       temp_imp_clauses.append(make_nboolvar(cond,i+1))
     imp_clauses.append([action_var, temp_imp_clauses])
   return imp_clauses
-def act_cnf_gen(constraints_list):
-  return []
 
 def clause_gen(constraint_list, k):
   initial_state = constraint_list.pop(0)
@@ -114,7 +116,10 @@ def clause_gen(constraint_list, k):
   goal_state = constraint_list.pop(0)
   goal_clauses = goal_clause_gen(goal_state, k)
   #print(goal_clauses)
-  act_imp_clauses = act_imp_clauses_gen(constraint_list, 1)
+  act_imp_clauses = []
+  for i in range(1,k):
+    temp_act_imp_clauses = act_imp_clauses_gen(constraint_list, i)
+    act_imp_clauses.append(temp_act_imp_clauses)
   return [initial_clauses, goal_clauses, act_imp_clauses]
 
 if __name__ == '__main__':
@@ -127,3 +132,13 @@ if __name__ == '__main__':
   #print('Time: ' + str(time.time() - start_time) + 's')
   # initial, goal and actions clauses as a list of lists:
   clauses = clause_gen(constraint_list,k)
+  initial_clauses = clauses.pop(0)
+  print("Initial clauses: ", initial_clauses)
+  goal_clauses = clauses.pop(0)
+  print("Goal clauses: ", goal_clauses)
+  imp_clauses = clauses.pop(0)
+  print("action clauses: ")
+  for imp in imp_clauses:
+    for clause in imp:
+      print("If: ", clause[0])
+      print("Then:", clause[1])
