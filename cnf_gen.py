@@ -78,6 +78,21 @@ def extract_var(var):
 
 #-------------------------------------------------------------------------------------------
 
+# AMO and ALO clauses:
+#-------------------------------------------------------------------------------------------
+
+# AtMostOne constraints for every pair of variables:
+def amo_alo(var_list):
+  amoalo_clause_list = []
+  for i in range(0, len(var_list)):
+    for j in range(i + 1, len(var_list)):
+      amoalo_clause_list.append([-var_list[i], -var_list[j]])
+  amoalo_clause_list.append(var_list)
+  print(amoalo_clause_list)
+  return amoalo_clause_list
+#-------------------------------------------------------------------------------------------
+
+
 # Clauses generator:
 #-------------------------------------------------------------------------------------------
 '''
@@ -212,3 +227,4 @@ if __name__ == '__main__':
   # initial, goal and actions clauses as a list of lists:
   clauses = clause_gen(constraint_list,k)
   integer_clauses = make_clauses_integer(clauses)
+  #amo_alo([1,2,3,4])
