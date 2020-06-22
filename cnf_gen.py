@@ -170,7 +170,7 @@ def make_clauses_integer(clauses):
   var_map = {}
   count = 1
   initial_clauses = clauses.pop(0)
-  #print("Initial clauses: ", initial_clauses)
+  print("Initial clauses: ", initial_clauses)
   temp_int_initial_clauses = []
   for clause in initial_clauses:
     # checking if the variable is postive:
@@ -188,7 +188,7 @@ def make_clauses_integer(clauses):
 
   # Assuming atleast one step is needed i.e. k > 1:
   goal_clauses = clauses.pop(0)
-  #print("Goal clauses: ", goal_clauses)
+  print("Goal clauses: ", goal_clauses)
   temp_int_goal_clauses = []
   for clause in goal_clauses:
     # checking if the variable is postive:
@@ -225,7 +225,7 @@ def make_clauses_integer(clauses):
       temp_step_int_clauses.append([temp_action, temp_int_then_clauses])
     temp_int_imp_clauses.append(temp_step_int_clauses)
   integer_clauses.append(temp_int_imp_clauses)
-  return integer_clauses
+  return (integer_clauses,var_map, count-1)
 
 #-------------------------------------------------------------------------------------------
 
@@ -278,6 +278,18 @@ def gen_cnf(complete_clauses):
 
 #-------------------------------------------------------------------------------------------
 
+# prints cnf format to stdout:
+#-------------------------------------------------------------------------------------------
+def print_cnf(cnf_list,var_count):
+  print("p cnf " + str(var_count) + " " + str(len(cnf_list)))
+  for clause in cnf_list:
+    temp_str = ''
+    for var in clause:
+      temp_str = temp_str + str(var) + ' '
+    temp_str = temp_str + '0'
+    print(temp_str)
+
+#-------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
   import sys, time
@@ -289,6 +301,9 @@ if __name__ == '__main__':
   #print('Time: ' + str(time.time() - start_time) + 's')
   # initial, goal and actions clauses as a list of lists:
   clauses = clause_gen(constraint_list,k)
-  integer_clauses = make_clauses_integer(clauses)
+  (integer_clauses,var_map,var_count) = make_clauses_integer(clauses)
   complete_clauses = complete_clauses_gen(integer_clauses)
   cnf_list = gen_cnf(complete_clauses)
+  for clause in cnf_list:
+    print(clause)
+  #print_cnf(cnf_list,var_count)
