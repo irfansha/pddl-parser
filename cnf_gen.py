@@ -7,8 +7,6 @@ commit id: 38cc9aa48208d396f4373198ef354918f548e7de
 
 '''
 Todos:
-  - add if then statement expansion for cnf format
-  - add exactly one constraints for moves
   - Update to include propagated boolean variable in time ("untouched" by action)
 '''
 
@@ -88,8 +86,24 @@ def amo_alo(var_list):
     for j in range(i + 1, len(var_list)):
       amoalo_clause_list.append([-var_list[i], -var_list[j]])
   amoalo_clause_list.append(var_list)
-  print(amoalo_clause_list)
   return amoalo_clause_list
+#-------------------------------------------------------------------------------------------
+
+# If then condition expansion:
+#-------------------------------------------------------------------------------------------
+'''
+Expands the if then condition in action rule:
+Ex: if x then (a & b) --> (-x V a) & (-x V b)
+'''
+def if_then_exp(condition):
+  expanded_condition = []
+  action_var = condition[0]
+  condition_vars = condition[1]
+  #print(action_var, condition_vars)
+  for var in condition_vars:
+    expanded_condition.append([-action_var,var])
+  return expanded_condition
+
 #-------------------------------------------------------------------------------------------
 
 
@@ -215,6 +229,55 @@ def make_clauses_integer(clauses):
 
 #-------------------------------------------------------------------------------------------
 
+# compelte clause generation:
+#-------------------------------------------------------------------------------------------
+'''
+Takes clause_list and returns updated clause_list
+- adds exactly one constraints one moves
+- propagates untouched boolean variables during an action
+'''
+def complete_clauses_gen(clause_list):
+  action_clauses = list(clause_list[2])
+  for clause_step in action_clauses:
+    temp_amoalo = []
+    for clause in clause_step:
+      temp_amoalo.append(clause[0])
+    temp_amoalo = amo_alo(temp_amoalo)
+    clause_list.append(temp_amoalo)
+  # XXX untouched clause propagation to be added
+  return clause_list
+
+#-------------------------------------------------------------------------------------------
+
+# cnf generator from clauses:
+#-------------------------------------------------------------------------------------------
+'''
+Takes complete clause list and generates cnf format for each clause:
+'''
+def gen_cnf(complete_clauses):
+  cnf_list = []
+  initial_clauses = complete_clauses.pop(0)
+  for var in initial_clauses:
+    cnf_list.append([var])
+
+  # Writing goal clauses to cnf:
+  goal_clauses = complete_clauses.pop(0)
+  for var in goal_clauses:
+    cnf_list.append([var])
+
+  # Expanding if then condition and writing to cnf:
+  action_clauses = complete_clauses.pop(0)
+  for clause_step in action_clauses:
+    for clause in clause_step:
+      cnf_list.extend(if_then_exp(clause))
+
+  # Appending amoalo clauses to the cnf:
+  for amoalo_clauses in complete_clauses:
+    cnf_list.extend(amoalo_clauses)
+  return cnf_list
+
+#-------------------------------------------------------------------------------------------
+
 
 if __name__ == '__main__':
   import sys, time
@@ -227,4 +290,5 @@ if __name__ == '__main__':
   # initial, goal and actions clauses as a list of lists:
   clauses = clause_gen(constraint_list,k)
   integer_clauses = make_clauses_integer(clauses)
-  #amo_alo([1,2,3,4])
+  complete_clauses = complete_clauses_gen(integer_clauses)
+  cnf_list = gen_cnf(complete_clauses)
