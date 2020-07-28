@@ -29,14 +29,15 @@ def constraints(domain, problem):
   parser.parse_problem(problem)
 
   state = parser.state
-  # Appending intial state clauses:
-  clause_list.append(state)
+  # Initial state clauses:
+  initial_clauses = list(state)
+  #print(initial_clauses)
 
   goal_pos = parser.positive_goals
   goal_not = parser.negative_goals
-  # Appending goal state clauses:
-  clause_list.append([goal_pos, goal_not])
+  goal_clauses = [goal_pos, goal_not]
 
+  action_list = []
   # Grounding process
   ground_actions = []
   for action in parser.actions:
@@ -44,7 +45,12 @@ def constraints(domain, problem):
       ground_actions.append(act)
   # Appending grounded actions:
   for act in ground_actions:
-    clause_list.append(act)
+    action_list.append(act)
+
+  # Appending to one list:
+  clause_list.append(initial_clauses)
+  clause_list.append(goal_clauses)
+  clause_list.extend(action_list)
   return clause_list
 #-------------------------------------------------------------------------------------------
 
@@ -68,6 +74,7 @@ def make_nboolvar(tup, i):
   #print(var)
   return var
 
+# Return sign of variable and the variable name without sign:
 def extract_var(var):
   if var[0] == '-':
     return (0,var[1:])
@@ -149,6 +156,15 @@ def act_imp_clauses_gen(constraints_list,i):
     imp_clauses.append([action_var, temp_imp_clauses])
   return imp_clauses
 
+def propagate_untouched_vars(initial_clauses, act_imp_clauses):
+  # We start with initial vars:
+  prev_step_vars = list(initial_clauses)
+  next_step_vars = []
+  for step_clause in act_imp_clauses:
+    for clause in step_clause:
+      print(clause)
+
+
 def clause_gen(constraint_list, k):
   initial_state = constraint_list.pop(0)
   initial_clauses = initial_clause_gen(initial_state)
@@ -160,6 +176,7 @@ def clause_gen(constraint_list, k):
   for i in range(1,k):
     temp_act_imp_clauses = act_imp_clauses_gen(constraint_list, i)
     act_imp_clauses.append(temp_act_imp_clauses)
+  #propagate_untouched_vars(initial_clauses, act_imp_clauses)
   return [initial_clauses, goal_clauses, act_imp_clauses]
 #-------------------------------------------------------------------------------------------
 
@@ -168,9 +185,10 @@ def clause_gen(constraint_list, k):
 def make_clauses_integer(clauses):
   integer_clauses = []
   var_map = {}
+  reverse_var_map = {}
   count = 1
   initial_clauses = clauses.pop(0)
-  print("Initial clauses: ", initial_clauses)
+  #print("Initial clauses: ", initial_clauses)
   temp_int_initial_clauses = []
   for clause in initial_clauses:
     # checking if the variable is postive:
@@ -188,7 +206,7 @@ def make_clauses_integer(clauses):
 
   # Assuming atleast one step is needed i.e. k > 1:
   goal_clauses = clauses.pop(0)
-  print("Goal clauses: ", goal_clauses)
+  #print("Goal clauses: ", goal_clauses)
   temp_int_goal_clauses = []
   for clause in goal_clauses:
     # checking if the variable is postive:
@@ -225,7 +243,9 @@ def make_clauses_integer(clauses):
       temp_step_int_clauses.append([temp_action, temp_int_then_clauses])
     temp_int_imp_clauses.append(temp_step_int_clauses)
   integer_clauses.append(temp_int_imp_clauses)
-  return (integer_clauses,var_map, count-1)
+  for key in var_map:
+    reverse_var_map[var_map[key]] = key
+  return (integer_clauses,reverse_var_map, count-1)
 
 #-------------------------------------------------------------------------------------------
 
@@ -301,9 +321,19 @@ if __name__ == '__main__':
   #print('Time: ' + str(time.time() - start_time) + 's')
   # initial, goal and actions clauses as a list of lists:
   clauses = clause_gen(constraint_list,k)
-  (integer_clauses,var_map,var_count) = make_clauses_integer(clauses)
+  (integer_clauses,reverse_var_map,var_count) = make_clauses_integer(clauses)
+  #print(reverse_var_map)
   complete_clauses = complete_clauses_gen(integer_clauses)
+  #print(complete_clauses)
   cnf_list = gen_cnf(complete_clauses)
+  '''
   for clause in cnf_list:
-    print(clause)
-  #print_cnf(cnf_list,var_count)
+    for var in clause:
+      if var > 0:
+        print(reverse_var_map[var])
+      else:
+        var = -var
+        print("Not", reverse_var_map[var])
+    print()
+  '''
+  print_cnf(cnf_list,var_count)
