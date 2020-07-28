@@ -7,8 +7,7 @@ commit id: 38cc9aa48208d396f4373198ef354918f548e7de
 
 '''
 Todos:
-  - Update to include propagated boolean variable in time ("untouched" by action)
-  - Build conditional variables for each iteration based on un-touched vars
+  - Testing needed for correctness
 '''
 
 
@@ -47,6 +46,7 @@ def constraints(domain, problem):
   # Appending grounded actions:
   for act in ground_actions:
     action_list.append(act)
+    #print(act)
 
   # Appending to one list:
   clause_list.append(initial_clauses)
@@ -75,6 +75,15 @@ def make_nboolvar(tup, i):
   #print(var)
   return var
 
+def make_compboolvar(tup, i, j):
+  var = ''
+  for ele in tup:
+    var = var + str(ele) + '_'
+    #print(ele)
+  var = var + str(i) + '_' + str(j)
+  #print(var)
+  return var
+
 # Return sign of variable and the variable name without sign:
 def extract_var(var):
   if var[0] == '-':
@@ -89,6 +98,7 @@ def extract_var(var):
 
 # AtMostOne constraints for every pair of variables:
 def amo_alo(var_list):
+  #print(var_list)
   amoalo_clause_list = []
   for i in range(0, len(var_list)):
     for j in range(i + 1, len(var_list)):
@@ -156,11 +166,15 @@ def extract_state_vars(constraint_list):
 Generates clauses with boolean variables for initial state,
 time step is considered 1:
 '''
-def initial_clause_gen(state):
+def initial_clause_gen(state, state_vars):
   initial_clauses = []
   for atom in state:
     var = make_pboolvar(atom,1)
     initial_clauses.append(var)
+  for var in state_vars:
+    if var not in state:
+      var_name = make_nboolvar(var,1)
+      initial_clauses.append(var_name)
   return initial_clauses
 
 def goal_clause_gen(state,k):
@@ -175,7 +189,7 @@ def goal_clause_gen(state,k):
     goal_clauses.append(var)
   return goal_clauses
 
-def act_imp_clauses_gen(constraints_list,i):
+def act_imp_clauses_gen(constraints_list, state_vars, i):
   imp_clauses = []
   for constraint in constraints_list:
     name = constraint.name + "_" + make_pboolvar(constraint.parameters,i)
@@ -185,35 +199,53 @@ def act_imp_clauses_gen(constraints_list,i):
       temp_imp_clauses.append(make_pboolvar(cond,i))
     for cond in constraint.negative_preconditions:
       temp_imp_clauses.append(make_nboolvar(cond,i))
+    # Identifying touched var:
+    touched_vars = []
     for cond in constraint.add_effects:
+      if cond not in touched_vars:
+        touched_vars.append(cond)
       temp_imp_clauses.append(make_pboolvar(cond,i+1))
     for cond in constraint.del_effects:
+      if cond not in touched_vars:
+        touched_vars.append(cond)
       temp_imp_clauses.append(make_nboolvar(cond,i+1))
+    # Extracting untouched vars:
+    untouched_vars = []
+    for var in state_vars:
+      if var not in touched_vars:
+        untouched_vars.append(var)
+    #print(temp_imp_clauses)
+    for var in untouched_vars:
+      temp_imp_clauses.append(make_compboolvar(var,i,i+1))
+    #print(temp_imp_clauses)
+    #print(untouched_vars)
     imp_clauses.append([action_var, temp_imp_clauses])
   return imp_clauses
 
-def propagate_untouched_vars(initial_clauses, act_imp_clauses):
-  # We start with initial vars:
-  prev_step_vars = list(initial_clauses)
-  next_step_vars = []
-  for step_clause in act_imp_clauses:
-    for clause in step_clause:
-      print(clause)
+def gen_cond_prop_clauses(state_vars,i):
+  temp_condprop_clauses = []
+  for var in state_vars:
+    cond_name = '-' + make_compboolvar(var,i,i+1)
+    temp_condprop_clauses.append([cond_name, make_pboolvar(var,i), make_nboolvar(var,i+1)])
+    temp_condprop_clauses.append([cond_name, make_nboolvar(var,i), make_pboolvar(var,i+1)])
+  return temp_condprop_clauses
 
-
-def clause_gen(constraint_list, k):
+def clause_gen(constraint_list, state_vars, k):
   initial_state = constraint_list.pop(0)
-  initial_clauses = initial_clause_gen(initial_state)
-  #print(initial_clauses)
+  initial_clauses = initial_clause_gen(initial_state, state_vars)
   goal_state = constraint_list.pop(0)
   goal_clauses = goal_clause_gen(goal_state, k)
   #print(goal_clauses)
   act_imp_clauses = []
+  cond_prop_clauses = []
   for i in range(1,k):
-    temp_act_imp_clauses = act_imp_clauses_gen(constraint_list, i)
+    temp_act_imp_clauses = act_imp_clauses_gen(constraint_list, state_vars, i)
+    temp_cond_prop_clauses = gen_cond_prop_clauses(state_vars,i)
     act_imp_clauses.append(temp_act_imp_clauses)
-  #propagate_untouched_vars(initial_clauses, act_imp_clauses)
-  return [initial_clauses, goal_clauses, act_imp_clauses]
+    cond_prop_clauses.append(temp_cond_prop_clauses)
+  #print(len(act_imp_clauses), len(cond_prop_clauses))
+  #print(cond_prop_clauses)
+  return [initial_clauses, goal_clauses, act_imp_clauses, cond_prop_clauses]
 #-------------------------------------------------------------------------------------------
 
 # Making clauses/variables integer:
@@ -279,6 +311,24 @@ def make_clauses_integer(clauses):
       temp_step_int_clauses.append([temp_action, temp_int_then_clauses])
     temp_int_imp_clauses.append(temp_step_int_clauses)
   integer_clauses.append(temp_int_imp_clauses)
+
+  cond_prop_clauses = clauses.pop(0)
+  temp_cond_prop_clauses = []
+  for step_cond_prop_clauses in cond_prop_clauses:
+    for clause in step_cond_prop_clauses:
+      var_clause = []
+      for var in clause:
+        # checking if the variable is postive:
+        (pos,var_name) = extract_var(var)
+        if var_name not in var_map:
+          var_map[var_name] = count
+          count = count + 1
+        if pos:
+          var_clause.append(var_map[var_name])
+        else:
+          var_clause.append(-var_map[var_name])
+      temp_cond_prop_clauses.append(var_clause)
+  integer_clauses.append(temp_cond_prop_clauses)
   for key in var_map:
     reverse_var_map[var_map[key]] = key
   return (integer_clauses,reverse_var_map, count-1)
@@ -290,17 +340,15 @@ def make_clauses_integer(clauses):
 '''
 Takes clause_list and returns updated clause_list
 - adds exactly one constraints one moves
-- propagates untouched boolean variables during an action
 '''
 def complete_clauses_gen(clause_list):
   action_clauses = list(clause_list[2])
   for clause_step in action_clauses:
-    temp_amoalo = []
+    temp_amoalo_list = []
     for clause in clause_step:
-      temp_amoalo.append(clause[0])
-    temp_amoalo = amo_alo(temp_amoalo)
+      temp_amoalo_list.append(clause[0])
+    temp_amoalo = amo_alo(temp_amoalo_list)
     clause_list.append(temp_amoalo)
-  # XXX untouched clause propagation to be added
   return clause_list
 
 #-------------------------------------------------------------------------------------------
@@ -326,6 +374,11 @@ def gen_cnf(complete_clauses):
   for clause_step in action_clauses:
     for clause in clause_step:
       cnf_list.extend(if_then_exp(clause))
+
+  # Adding propagation clauses:
+  prop_clauses = complete_clauses.pop(0)
+  for clause in prop_clauses:
+    cnf_list.append(clause)
 
   # Appending amoalo clauses to the cnf:
   for amoalo_clauses in complete_clauses:
@@ -360,7 +413,7 @@ if __name__ == '__main__':
   state_vars = extract_state_vars(temp_constraint_list)
   #print('Time: ' + str(time.time() - start_time) + 's')
   # initial, goal and actions clauses as a list of lists:
-  clauses = clause_gen(constraint_list,k)
+  clauses = clause_gen(constraint_list,state_vars, k)
   (integer_clauses,reverse_var_map,var_count) = make_clauses_integer(clauses)
   #print(reverse_var_map)
   complete_clauses = complete_clauses_gen(integer_clauses)
@@ -376,4 +429,6 @@ if __name__ == '__main__':
         print("Not", reverse_var_map[var])
     print()
   '''
-  #print_cnf(cnf_list,var_count)
+  print_cnf(cnf_list,var_count)
+  #for mp in reverse_var_map:
+  #  print(mp,reverse_var_map[mp])
