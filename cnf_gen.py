@@ -8,6 +8,7 @@ commit id: 38cc9aa48208d396f4373198ef354918f548e7de
 '''
 Todos:
   - Update to include propagated boolean variable in time ("untouched" by action)
+  - Build conditional variables for each iteration based on un-touched vars
 '''
 
 
@@ -110,6 +111,41 @@ def if_then_exp(condition):
   for var in condition_vars:
     expanded_condition.append([-action_var,var])
   return expanded_condition
+
+#-------------------------------------------------------------------------------------------
+
+# State variables extractor:
+#-------------------------------------------------------------------------------------------
+'''
+Extracts all possible states from constraints available:
+'''
+def extract_state_vars(constraint_list):
+  state_vars = []
+  initial_state = constraint_list.pop(0)
+  for var in initial_state:
+    if var not in state_vars:
+      state_vars.append(var)
+  goal_state = constraint_list.pop(0)
+  for var_list in goal_state:
+    for var in var_list:
+      if var not in state_vars:
+        state_vars.append(var)
+  # Rest of the actions, considering pre/post conditions:
+  for constraint in constraint_list:
+    temp_imp_clauses = []
+    for cond in constraint.positive_preconditions:
+      if cond not in state_vars:
+        state_vars.append(cond)
+    for cond in constraint.negative_preconditions:
+      if cond not in state_vars:
+        state_vars.append(cond)
+    for cond in constraint.add_effects:
+      if cond not in state_vars:
+        state_vars.append(cond)
+    for cond in constraint.del_effects:
+      if cond not in state_vars:
+        state_vars.append(cond)
+  return state_vars
 
 #-------------------------------------------------------------------------------------------
 
@@ -318,6 +354,10 @@ if __name__ == '__main__':
   problem = sys.argv[2]
   k = int(sys.argv[3])
   constraint_list = constraints(domain, problem)
+  temp_constraint_list = list(constraint_list)
+  #print(temp_constraint_list)
+  # extracting all state variables:
+  state_vars = extract_state_vars(temp_constraint_list)
   #print('Time: ' + str(time.time() - start_time) + 's')
   # initial, goal and actions clauses as a list of lists:
   clauses = clause_gen(constraint_list,k)
@@ -336,4 +376,4 @@ if __name__ == '__main__':
         print("Not", reverse_var_map[var])
     print()
   '''
-  print_cnf(cnf_list,var_count)
+  #print_cnf(cnf_list,var_count)
