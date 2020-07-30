@@ -335,7 +335,7 @@ def make_clauses_integer(clauses):
 
 #-------------------------------------------------------------------------------------------
 
-# compelte clause generation:
+# complete clause generation:
 #-------------------------------------------------------------------------------------------
 '''
 Takes clause_list and returns updated clause_list
@@ -400,12 +400,23 @@ def print_cnf(cnf_list,var_count):
 
 #-------------------------------------------------------------------------------------------
 
-if __name__ == '__main__':
-  import sys, time
-  #start_time = time.time()
-  domain = sys.argv[1]
-  problem = sys.argv[2]
-  k = int(sys.argv[3])
+# prints cnf format to file:
+#-------------------------------------------------------------------------------------------
+def write_cnf(cnf_list,var_count, f):
+  f.write("p cnf " + str(var_count) + " " + str(len(cnf_list)) + "\n")
+  for clause in cnf_list:
+    temp_str = ''
+    for var in clause:
+      temp_str = temp_str + str(var) + ' '
+    temp_str = temp_str + '0'
+    f.write(temp_str + "\n")
+
+#-------------------------------------------------------------------------------------------
+
+
+# generates cnf file and variable map:
+#-------------------------------------------------------------------------------------------
+def generate_cnf(domain, problem, k):
   constraint_list = constraints(domain, problem)
   temp_constraint_list = list(constraint_list)
   #print(temp_constraint_list)
@@ -419,16 +430,19 @@ if __name__ == '__main__':
   complete_clauses = complete_clauses_gen(integer_clauses)
   #print(complete_clauses)
   cnf_list = gen_cnf(complete_clauses)
-  '''
-  for clause in cnf_list:
-    for var in clause:
-      if var > 0:
-        print(reverse_var_map[var])
-      else:
-        var = -var
-        print("Not", reverse_var_map[var])
-    print()
-  '''
-  print_cnf(cnf_list,var_count)
+  return cnf_list, reverse_var_map, var_count
+
+#-------------------------------------------------------------------------------------------
+
+
+
+if __name__ == '__main__':
+  import sys, time
+  #start_time = time.time()
+  domain = sys.argv[1]
+  problem = sys.argv[2]
+  k = int(sys.argv[3])
+  cnf_list, reverse_var_map, var_count = generate_cnf(domain, problem, k)
+  #print_cnf(cnf_list,var_count)
   #for mp in reverse_var_map:
   #  print(mp,reverse_var_map[mp])
