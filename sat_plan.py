@@ -28,21 +28,25 @@ if __name__ == '__main__':
   domain = sys.argv[1]
   problem = sys.argv[2]
   k = int(sys.argv[3])
-  cnf_file_name = sys.argv[4]
-  # generating and writing cnf file for the problem:
-  cnf_list, reverse_var_map, var_count, step_actions_list = cg.generate_cnf(domain, problem, k)
-  f = open(cnf_file_name, 'w')
-  cg.write_cnf(cnf_list,var_count,f)
-  f.close()
-  # solving the problem using sat solver
-  #(assuming minisat available in current folder):
-  command = "./MiniSat_v1.14_linux" + " " + cnf_file_name + " sat_plan_output\n"
-  os.system(command)
-  var_list = parse_sat_output("sat_plan_output")
-  # printing the extracted plan:
-  if (var_list):
-    for actions in step_actions_list:
-      for action in actions:
-        if var_list[action-1] == 1:
-          print(reverse_var_map[action])
+  for i in range(2, k):
+    print("Running for length:", i)
+    # generating and writing cnf file for the problem:
+    cnf_list, reverse_var_map, var_count, step_actions_list = cg.generate_cnf(domain, problem, i)
+    cnf_file_name = "input_plan_" + str(i) + ".cnf"
+    f = open(cnf_file_name, 'w')
+    cg.write_cnf(cnf_list,var_count,f)
+    f.close()
+    plan_output_filename = "sat_plan_output_" + str(i) + ".txt"
+    # solving the problem using sat solver
+    #(assuming minisat available in current folder):
+    command = "./MiniSat_v1.14_linux" + " " + cnf_file_name + " " + plan_output_filename +" >> stats.txt"
+    os.system(command)
+    variable_list = parse_sat_output(plan_output_filename)
+    # printing the extracted plan:
+    if (variable_list):
+      for actions in step_actions_list:
+        for action in actions:
+          if variable_list[action-1] == 1:
+            print(reverse_var_map[action])
+      break
 
