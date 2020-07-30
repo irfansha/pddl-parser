@@ -343,13 +343,15 @@ Takes clause_list and returns updated clause_list
 '''
 def complete_clauses_gen(clause_list):
   action_clauses = list(clause_list[2])
+  amoalo_list = []
   for clause_step in action_clauses:
     temp_amoalo_list = []
     for clause in clause_step:
       temp_amoalo_list.append(clause[0])
+    amoalo_list.append(temp_amoalo_list)
     temp_amoalo = amo_alo(temp_amoalo_list)
     clause_list.append(temp_amoalo)
-  return clause_list
+  return clause_list, amoalo_list
 
 #-------------------------------------------------------------------------------------------
 
@@ -427,10 +429,9 @@ def generate_cnf(domain, problem, k):
   clauses = clause_gen(constraint_list,state_vars, k)
   (integer_clauses,reverse_var_map,var_count) = make_clauses_integer(clauses)
   #print(reverse_var_map)
-  complete_clauses = complete_clauses_gen(integer_clauses)
-  #print(complete_clauses)
+  complete_clauses, step_actions_list = complete_clauses_gen(integer_clauses)
   cnf_list = gen_cnf(complete_clauses)
-  return cnf_list, reverse_var_map, var_count
+  return cnf_list, reverse_var_map, var_count, step_actions_list
 
 #-------------------------------------------------------------------------------------------
 
@@ -442,7 +443,7 @@ if __name__ == '__main__':
   domain = sys.argv[1]
   problem = sys.argv[2]
   k = int(sys.argv[3])
-  cnf_list, reverse_var_map, var_count = generate_cnf(domain, problem, k)
+  cnf_list, reverse_var_map, var_count, step_actions_list = generate_cnf(domain, problem, k)
   #print_cnf(cnf_list,var_count)
   #for mp in reverse_var_map:
   #  print(mp,reverse_var_map[mp])
