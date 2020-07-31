@@ -2,7 +2,7 @@
 
 '''
 Todos:
-  - Add functionality to go through each step to get the required plan
+  - Add parameter for arbitrary sat solver.
 '''
 
 import cnf_gen as cg
