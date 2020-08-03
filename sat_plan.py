@@ -28,6 +28,7 @@ if __name__ == '__main__':
   domain = sys.argv[1]
   problem = sys.argv[2]
   k = int(sys.argv[3])
+  solver_path = sys.argv[4]
   for i in range(2, k):
     print("Running for length:", i)
     # generating and writing cnf file for the problem:
@@ -39,7 +40,7 @@ if __name__ == '__main__':
     plan_output_filename = "sat_plan_output_" + str(i) + ".txt"
     # solving the problem using sat solver
     #(assuming minisat available in current folder):
-    command = "./MiniSat_v1.14_linux" + " " + cnf_file_name + " " + plan_output_filename +" >> stats.txt"
+    command = solver_path + " " + cnf_file_name + " " + plan_output_filename +" >> stats.txt"
     os.system(command)
     variable_list = parse_sat_output(plan_output_filename)
     # printing the extracted plan:
