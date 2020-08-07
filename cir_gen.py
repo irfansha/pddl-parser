@@ -252,14 +252,9 @@ def generate_cir(domain, problem):
   return complete_gates, actions_list, proper_state_variables
 #-------------------------------------------------------------------------------------------
 
-
-# prints cnf format to stdout:
+# Exists block:
 #-------------------------------------------------------------------------------------------
-def print_cir(gates, action_vars, state_vars,k):
-  # Heading
-  print("#qcir_intermediate_planning_format20")
-  # Quantifier blocks:
-  # Exists block:
+def exists_block_print(state_vars):
   exists_state_var_mat = []
   for i in range(k+1):
     exists_state_var_list = []
@@ -272,32 +267,56 @@ def print_cir(gates, action_vars, state_vars,k):
     exists_string += ', '.join(exists_state_var_list) + ', '
   exists_string = exists_string[:-2]
   print('exists('+ exists_string + ')')
-  # Forall block,
-  # assuming the transition is from state_vars1 -> state_vars:
+#-------------------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------------------
+def forall_block_print(state_vars):
   forall_string = ''
   for i in range(1,3):
     for state_var in state_vars:
       forall_string += state_var + str(i) + ', '
   forall_string = forall_string[:-2]
   print('forall(' + forall_string + ')')
+#-------------------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------------------
+
+
+# prints cnf format to stdout:
+#-------------------------------------------------------------------------------------------
+def print_cir(gates, action_vars, state_vars,k):
+  # Heading
+  print("#qcir_intermediate_planning_format20")
+  # Quantifier blocks:
+
+  # Exists block:
+  exists_block_print(state_vars)
+
+  # Forall block,
+  # assuming the transition is from state_vars1 -> state_vars:
+  forall_block_print(state_vars)
+
   '''
   g_forall_comp_name = 'g_forall_comp_name'
   for i in range(k+1):
   '''
   # Output gate specification:
   print('output(g_o)')
+
   # Initial gate, g_i:
   initial_gate = gates.pop(0)
   #print(initial_gate)
   i_string = ', '.join(initial_gate)
   i_string = "and(" + i_string + ")"
   print('g_i = ' + i_string)
+
   # Goal gate, g_g:
   goal_gate = gates.pop(0)
   #print(goal_gate)
   g_string = ', '.join(goal_gate)
   g_string = "and(" + g_string + ")"
   print('g_g = ' + g_string)
+
   '''
   Transition gates:
   - if gates, g_t_if_*
