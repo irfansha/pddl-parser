@@ -6,6 +6,12 @@ Url: https://github.com/irfansha/pddl-parser/blob/master/cnf_gen.py
 Commit id: e9494e8b1db249cdbea02fe223b91c28fb59a448
 '''
 
+'''
+Todos:
+  - Add the condition gate for transition gates in forall block
+  - Build dictionary to print integers instead of verbose gates
+'''
+
 from PDDL import PDDL_Parser
 
 # state extraction from pddl domain and problem:
