@@ -203,6 +203,7 @@ def gate_gen(constraint_list, state_vars):
   #print(goal_gate)
   act_imp_gates = act_imp_gate_gen(constraint_list, state_vars, 1)
   cond_prop_gates = gen_cond_prop_gates(state_vars,1)
+  #print(cond_prop_gates)
   return [initial_gate, goal_gate, act_imp_gates, cond_prop_gates]
 #-------------------------------------------------------------------------------------------
 
@@ -320,8 +321,8 @@ def print_cir(gates, action_vars, state_vars,k):
   '''
   Transition gates:
   - if gates, g_t_if_*
-  - untouched propagation gates, g_t_prop_*
   - then gates, g_t_then_*
+  - untouched propagation gates, g_t_prop_*
   - if then gates, g_t_if_then_*
   - AmoAlo gate, g_t_amoalo
   - final transtion gate, g_t_final
@@ -337,9 +338,6 @@ def print_cir(gates, action_vars, state_vars,k):
     g_t_if_string = "and(" + action_var + ")"
     print(g_t_if_name + str(g_t_if_count) + " = " + g_t_if_string)
 
-  # Untouched propagation gates, g_t_prop_*:
-  # XXX
-
   # Then gates, g_t_then_*:
   g_t_then_name = "g_t_then_"
   g_t_then_count = 0
@@ -349,6 +347,17 @@ def print_cir(gates, action_vars, state_vars,k):
     g_t_then_string = ', '.join(action_gate[1])
     g_t_then_string = "and(" + g_t_then_string + ")"
     print(g_t_then_name + str(g_t_then_count) + " = " + g_t_then_string)
+
+  # Untouched propagation gates, g_t_prop_*:
+  g_t_prop_name = "g_t_prop_"
+  g_t_prop_count = 0
+  untouch_prop_gates = gates.pop(0)
+  for prop_gate in untouch_prop_gates:
+    g_t_prop_count = g_t_prop_count + 1
+    g_t_prop_string = ', '.join(prop_gate)
+    g_t_prop_string = "and(" + g_t_prop_string + ")"
+    print(g_t_prop_name + str(g_t_prop_count) + " = " + g_t_prop_string)
+    #print(prop_gate)
 
   # If then gates, g_t_if_then_*:
   g_t_if_then_name = "g_t_if_then_"
@@ -368,8 +377,12 @@ def print_cir(gates, action_vars, state_vars,k):
   if_then_var_string = ''
   for i in range(len(action_vars)):
       if_then_var_string += g_t_if_then_name + str(i+1) + ", "
-  if_then_var_string = if_then_var_string[:-2]
-  print("g_t_final = and(" + if_then_var_string + ", g_t_amoalo)")
+  #if_then_var_string = if_then_var_string[:-2]
+  # for untouched prop:
+  untouched_prop_var_string = ''
+  for i in range(len(untouch_prop_gates)):
+      untouched_prop_var_string += g_t_prop_name + str(i+1) + ", "
+  print("g_t_final = and(" + if_then_var_string + untouched_prop_var_string + "g_t_amoalo)")
   # If the conditions in forall quantifier then transition:
   # XXX
   # Output gate, g_o:
