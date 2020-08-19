@@ -261,7 +261,7 @@ def generate_cir(domain, problem):
 
 # Exists block:
 #-------------------------------------------------------------------------------------------
-def exists_block_print(state_vars):
+def exists_block_print(state_vars, k):
   exists_state_var_mat = []
   for i in range(k+1):
     exists_state_var_list = []
@@ -286,6 +286,34 @@ def forall_block_print(state_vars):
   print('forall(' + forall_string + ')')
 #-------------------------------------------------------------------------------------------
 
+
+#-------------------------------------------------------------------------------------------
+def forall_condition_print(state_vars, k):
+  g_eq_name = "g_eq_"
+  g_eq_conjunction_name_list = []
+  for i in range(k):
+    g_eq_name_list = []
+    for j in range(len(state_vars)):
+      temp_name = str(i) + '_' + str(j+1)
+      g_eq_name_list.append(g_eq_name + "1_" + temp_name)
+      print(g_eq_name + "1_" + temp_name +  " = eq(" + state_vars[j] + str(1) + ', S_' + temp_name + ")")
+    g_eq_tuple_name = ', '.join(g_eq_name_list)
+    print(g_eq_name + "1_" + str(i) + " = and(" + g_eq_tuple_name + ")")
+    print("\n")
+    g_eq_name_list = []
+    for j in range(len(state_vars)):
+      temp_name = str(i+1) + '_' + str(j+1)
+      g_eq_name_list.append(g_eq_name + "2_" + temp_name)
+      print(g_eq_name + "2_" + temp_name +  " = eq(" + state_vars[j] + str(2) + ', S_' + temp_name + ")")
+    g_eq_tuple_name = ', '.join(g_eq_name_list)
+    print(g_eq_name + "2_" + str(i+1) + " = and(" + g_eq_tuple_name + ")")
+    g_eq_conjunction_name_list.append("g_eq_and_1_" + str(i) + "_2_" + str(i+1))
+    print("g_eq_and_1_" + str(i) + "_2_" + str(i+1) + " = and(" + g_eq_name + "1_" + str(i) + ", " +g_eq_name + "2_" + str(i+1) + ")")
+    print("\n")
+  print("g_eq_cond = or(" + ', '.join(g_eq_conjunction_name_list) + ")")
+
+#-------------------------------------------------------------------------------------------
+
 #-------------------------------------------------------------------------------------------
 
 
@@ -297,7 +325,7 @@ def print_cir(gates, action_vars, state_vars,k):
   # Quantifier blocks:
 
   # Exists block:
-  exists_block_print(state_vars)
+  exists_block_print(state_vars, k)
 
   # Forall block,
   # assuming the transition is from state_vars1 -> state_vars:
@@ -390,7 +418,8 @@ def print_cir(gates, action_vars, state_vars,k):
       untouched_prop_var_string += g_t_prop_name + str(i+1) + ", "
   print("g_t_final = and(" + if_then_var_string + untouched_prop_var_string + "g_t_amoalo)")
   # If the conditions in forall quantifier then transition:
-  # XXX
+  forall_condition_print(state_vars, k)
+  print("g_cond_t_final = or(-g_eq_cond, g_t_final)")
   # Output gate, g_o:
   print("g_o = and(g_i, g_g, g_cond_t_final)")
 #-------------------------------------------------------------------------------------------
