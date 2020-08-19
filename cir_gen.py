@@ -8,7 +8,10 @@ Commit id: e9494e8b1db249cdbea02fe223b91c28fb59a448
 
 '''
 Todos:
-  - Add the condition gate for transition gates in forall block
+  - Add comments in the print
+  - Update initial and goal gates
+  - Update the advanced gates to simple gates
+  - Preprocess the state_variables to remove '-' symbols in names
   - Build dictionary to print integers instead of verbose gates
 '''
 
