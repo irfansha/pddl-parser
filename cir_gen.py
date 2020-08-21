@@ -298,16 +298,20 @@ def forall_condition_print(state_vars, k):
     g_eq_name_list = []
     for j in range(len(state_vars)):
       temp_name = str(i) + '_' + str(j+1)
-      g_eq_name_list.append(g_eq_name + "1_" + temp_name)
-      print(g_eq_name + "1_" + temp_name +  " = eq(" + state_vars[j] + str(1) + ', S_' + temp_name + ")")
+      g_eq_name_list.append(g_eq_name + "1_" + temp_name + '_f')
+      print(g_eq_name + "1_" + temp_name +  "_f = or(-" + state_vars[j] + str(1) + ', S_' + temp_name + ")")
+      g_eq_name_list.append(g_eq_name + "1_" + temp_name + '_s')
+      print(g_eq_name + "1_" + temp_name +  "_s = or(" + state_vars[j] + str(1) + ', -S_' + temp_name + ")")
     g_eq_tuple_name = ', '.join(g_eq_name_list)
     print(g_eq_name + "1_" + str(i) + " = and(" + g_eq_tuple_name + ")")
     print("\n")
     g_eq_name_list = []
     for j in range(len(state_vars)):
       temp_name = str(i+1) + '_' + str(j+1)
-      g_eq_name_list.append(g_eq_name + "2_" + temp_name)
-      print(g_eq_name + "2_" + temp_name +  " = eq(" + state_vars[j] + str(2) + ', S_' + temp_name + ")")
+      g_eq_name_list.append(g_eq_name + "2_" + temp_name + '_f')
+      print(g_eq_name + "2_" + temp_name +  "_f = or(-" + state_vars[j] + str(2) + ', S_' + temp_name + ")")
+      g_eq_name_list.append(g_eq_name + "2_" + temp_name + '_s')
+      print(g_eq_name + "2_" + temp_name +  "_s = or(" + state_vars[j] + str(2) + ', -S_' + temp_name + ")")
     g_eq_tuple_name = ', '.join(g_eq_name_list)
     print(g_eq_name + "2_" + str(i+1) + " = and(" + g_eq_tuple_name + ")")
     g_eq_conjunction_name_list.append("g_eq_and_1_" + str(i) + "_2_" + str(i+1))
@@ -326,20 +330,21 @@ def print_cir(gates, action_vars, state_vars,k):
   # Heading
   print("#qcir_intermediate_planning_format20")
   # Quantifier blocks:
-
+  print("\n")
   # Exists block:
   exists_block_print(state_vars, k)
-
+  print("\n")
   # Forall block,
   # assuming the transition is from state_vars1 -> state_vars:
   forall_block_print(state_vars)
-
+  print("\n")
   '''
   g_forall_comp_name = 'g_forall_comp_name'
   for i in range(k+1):
   '''
   # Output gate specification:
   print('output(g_o)')
+  print("\n")
 
   # Initial gate, g_i:
   initial_gate = gates.pop(0)
@@ -347,6 +352,7 @@ def print_cir(gates, action_vars, state_vars,k):
   i_string = ', '.join(initial_gate)
   i_string = "and(" + i_string + ")"
   print('g_i = ' + i_string)
+  print("\n")
 
   # Goal gate, g_g:
   goal_gate = gates.pop(0)
@@ -354,6 +360,7 @@ def print_cir(gates, action_vars, state_vars,k):
   g_string = ', '.join(goal_gate)
   g_string = "and(" + g_string + ")"
   print('g_g = ' + g_string)
+  print("\n")
 
   '''
   Transition gates:
@@ -374,6 +381,7 @@ def print_cir(gates, action_vars, state_vars,k):
     g_t_if_count = g_t_if_count + 1
     g_t_if_string = "and(" + action_var + ")"
     print(g_t_if_name + str(g_t_if_count) + " = " + g_t_if_string)
+  print("\n")
 
   # Then gates, g_t_then_*:
   g_t_then_name = "g_t_then_"
@@ -384,6 +392,7 @@ def print_cir(gates, action_vars, state_vars,k):
     g_t_then_string = ', '.join(action_gate[1])
     g_t_then_string = "and(" + g_t_then_string + ")"
     print(g_t_then_name + str(g_t_then_count) + " = " + g_t_then_string)
+  print("\n")
 
   # Untouched propagation gates, g_t_prop_*:
   g_t_prop_name = "g_t_prop_"
@@ -395,6 +404,7 @@ def print_cir(gates, action_vars, state_vars,k):
     g_t_prop_string = "or(" + g_t_prop_string + ")"
     print(g_t_prop_name + str(g_t_prop_count) + " = " + g_t_prop_string)
     #print(prop_gate)
+  print("\n")
 
   # If then gates, g_t_if_then_*:
   g_t_if_then_name = "g_t_if_then_"
@@ -403,6 +413,7 @@ def print_cir(gates, action_vars, state_vars,k):
     g_t_if_then_count = g_t_if_then_count + 1
     g_t_if_then_string = "or(-" + g_t_if_name + str(g_t_if_then_count) + ", " + g_t_then_name + str(g_t_if_then_count) + ")"
     print(g_t_if_then_name + str(g_t_if_then_count) + " = " + g_t_if_then_string)
+  print("\n")
 
   # AmoAlo gate, g_t_amoalo:
   if_var_string = ''
@@ -410,16 +421,21 @@ def print_cir(gates, action_vars, state_vars,k):
       if_var_string += g_t_if_name + str(i+1) + ", "
   if_var_string = if_var_string[:-2]
   print("g_t_amoalo = amoalo(" + if_var_string + ")")
+  print("\n")
+
   # Final transtion gate, g_t_final
   if_then_var_string = ''
   for i in range(len(action_vars)):
       if_then_var_string += g_t_if_then_name + str(i+1) + ", "
   #if_then_var_string = if_then_var_string[:-2]
+
   # for untouched prop:
   untouched_prop_var_string = ''
   for i in range(len(untouch_prop_gates)):
       untouched_prop_var_string += g_t_prop_name + str(i+1) + ", "
   print("g_t_final = and(" + if_then_var_string + untouched_prop_var_string + "g_t_amoalo)")
+  print("\n")
+
   # If the conditions in forall quantifier then transition:
   forall_condition_print(state_vars, k)
   print("g_cond_t_final = or(-g_eq_cond, g_t_final)")
