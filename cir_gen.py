@@ -392,7 +392,7 @@ def print_cir(gates, action_vars, state_vars,k):
   for prop_gate in untouch_prop_gates:
     g_t_prop_count = g_t_prop_count + 1
     g_t_prop_string = ', '.join(prop_gate)
-    g_t_prop_string = "and(" + g_t_prop_string + ")"
+    g_t_prop_string = "or(" + g_t_prop_string + ")"
     print(g_t_prop_name + str(g_t_prop_count) + " = " + g_t_prop_string)
     #print(prop_gate)
 
