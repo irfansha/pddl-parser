@@ -401,7 +401,7 @@ def print_cir(gates, action_vars, state_vars,k):
   g_t_if_then_count = 0
   for action_var in action_vars:
     g_t_if_then_count = g_t_if_then_count + 1
-    g_t_if_then_string = "it(" + g_t_if_name + str(g_t_if_then_count) + ", " + g_t_then_name + str(g_t_if_then_count) + ")"
+    g_t_if_then_string = "or(-" + g_t_if_name + str(g_t_if_then_count) + ", " + g_t_then_name + str(g_t_if_then_count) + ")"
     print(g_t_if_then_name + str(g_t_if_then_count) + " = " + g_t_if_then_string)
 
   # AmoAlo gate, g_t_amoalo:
