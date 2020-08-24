@@ -437,11 +437,36 @@ def print_cir(gates, action_vars, state_vars,k):
   print("\n")
 
   # AmoAlo gate, g_t_amoalo:
+  amoalo_gate_then_count = 0
+  for i in range(len(action_vars)):
+    temp_string = ''
+    for j in range(len(action_vars)):
+      if i != j:
+        temp_string += g_t_if_name + str(j+1) + ", "
+    temp_string = temp_string[:-2]
+    amoalo_gate_then_count += 1
+    print("g_t_amoalo_then_"+ str(amoalo_gate_then_count) +   " = or(" + temp_string + ")")
+  #print("g_t_amoalo = amoalo(" + if_var_string + ")")
+  print("\n")
+
+  amoalo_gate_if_then_not_count = 0
+  for i in range(len(action_vars))  :
+    print("g_t_amoalo_if_then_not_" + str(i+1) + " = or(-g_t_if_" + str(i+1) + ", -g_t_amoalo_then_" + str(i+1) + ")")
+  print("\n")
+
+  # Alo gate:
   if_var_string = ''
   for i in range(len(action_vars)):
       if_var_string += g_t_if_name + str(i+1) + ", "
   if_var_string = if_var_string[:-2]
-  print("g_t_amoalo = amoalo(" + if_var_string + ")")
+  print("g_t_alo = or(" + if_var_string + ")")
+  print("\n")
+
+  # Final amoalo gate:
+  amoalo_string = ''
+  for i in range(len(action_vars)):
+    amoalo_string += "g_t_amoalo_if_then_not_" + str(i+1) + ', '
+  print("g_t_amoalo = and(" + amoalo_string + "g_t_alo)")
   print("\n")
 
   # Final transtion gate, g_t_final
