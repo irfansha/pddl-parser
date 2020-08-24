@@ -201,7 +201,7 @@ def gen_cond_prop_gates(state_vars,i):
     temp_condprop_gates.append([cond_name, make_nboolvar(var,i), make_pboolvar(var,i+1)])
   return temp_condprop_gates
 
-# generates gates XXX:
+# generates gates:
 #-------------------------------------------------------------------------------------------
 def gate_gen(constraint_list, state_vars):
   initial_state = constraint_list.pop(0)
@@ -349,18 +349,39 @@ def print_cir(gates, action_vars, state_vars,k):
   # Initial gate, g_i:
   initial_gate = gates.pop(0)
   #print(initial_gate)
-  i_string = ', '.join(initial_gate)
+  i_string = ''
+  for i in range(len(initial_gate)):
+    sign, name = extract_var(initial_gate[i])
+    if sign:
+      i_string += 'S_0_' + str(i+1) + ', '
+    else:
+      i_string += '-S_0_' + str(i+1) + ', '
+  i_string = i_string[:-2]
   i_string = "and(" + i_string + ")"
   print('g_i = ' + i_string)
   print("\n")
 
+
+  goal_state_vars_map = {}
+  for i in range(len(state_vars)):
+    goal_state_vars_map[state_vars[i] + 'g'] = i + 1
+
   # Goal gate, g_g:
   goal_gate = gates.pop(0)
   #print(goal_gate)
-  g_string = ', '.join(goal_gate)
+  g_string = ''
+  for g_gate in goal_gate:
+    sign, name = extract_var(g_gate)
+    if sign:
+      g_string += 'S_0_' + str(goal_state_vars_map[name]) + ', '
+    else:
+      g_string += '-S_0_' + str(goal_state_vars_map[name]) + ', '
+  g_string = g_string[:-2]
   g_string = "and(" + g_string + ")"
   print('g_g = ' + g_string)
   print("\n")
+
+
 
   '''
   Transition gates:
