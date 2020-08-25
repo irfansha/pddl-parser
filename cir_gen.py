@@ -9,8 +9,6 @@ Commit id: e9494e8b1db249cdbea02fe223b91c28fb59a448
 '''
 Todos:
   - Add comments in the print
-  - Update initial and goal gates
-  - Update the advanced gates to simple gates
   - Preprocess the state_variables to remove '-' symbols in names
   - Build dictionary to print integers instead of verbose gates
 '''
@@ -195,11 +193,13 @@ def act_imp_gate_gen(constraints_list, state_vars, i):
 
 def gen_cond_prop_gates(state_vars,i):
   temp_condprop_gates = []
+  condprop_names = []
   for var in state_vars:
     cond_name = '-' + make_compboolvar(var,i,i+1)
+    condprop_names.append(make_compboolvar(var,i,i+1))
     temp_condprop_gates.append([cond_name, make_pboolvar(var,i), make_nboolvar(var,i+1)])
     temp_condprop_gates.append([cond_name, make_nboolvar(var,i), make_pboolvar(var,i+1)])
-  return temp_condprop_gates
+  return temp_condprop_gates, condprop_names
 
 # generates gates:
 #-------------------------------------------------------------------------------------------
@@ -211,9 +211,9 @@ def gate_gen(constraint_list, state_vars):
   goal_gate = goal_gate_gen(goal_state, 'g')
   #print(goal_gate)
   act_imp_gates = act_imp_gate_gen(constraint_list, state_vars, 1)
-  cond_prop_gates = gen_cond_prop_gates(state_vars,1)
+  cond_prop_gates, cond_prop_names = gen_cond_prop_gates(state_vars,1)
   #print(cond_prop_gates)
-  return [initial_gate, goal_gate, act_imp_gates, cond_prop_gates]
+  return [initial_gate, goal_gate, act_imp_gates, cond_prop_gates, cond_prop_names]
 #-------------------------------------------------------------------------------------------
 
 
@@ -280,8 +280,12 @@ def exists_block_print(state_vars, k):
 #-------------------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------------------
-def forall_block_print(state_vars):
+def forall_block_print(state_vars, action_vars, untouched_prop_gates):
   forall_string = ''
+  for action_var in action_vars:
+    forall_string += action_var + ', '
+  for prop_gate in untouched_prop_gates:
+    forall_string += prop_gate + ', '
   for i in range(1,3):
     for state_var in state_vars:
       forall_string += state_var + str(i) + ', '
@@ -336,7 +340,7 @@ def print_cir(gates, action_vars, state_vars,k):
   print("\n")
   # Forall block,
   # assuming the transition is from state_vars1 -> state_vars:
-  forall_block_print(state_vars)
+  forall_block_print(state_vars, action_vars, gates[4])
   print("\n")
   '''
   g_forall_comp_name = 'g_forall_comp_name'
@@ -373,9 +377,9 @@ def print_cir(gates, action_vars, state_vars,k):
   for g_gate in goal_gate:
     sign, name = extract_var(g_gate)
     if sign:
-      g_string += 'S_0_' + str(goal_state_vars_map[name]) + ', '
+      g_string += 'S_' + str(k) + '_' + str(goal_state_vars_map[name]) + ', '
     else:
-      g_string += '-S_0_' + str(goal_state_vars_map[name]) + ', '
+      g_string += '-S_' + str(k) + '_' + str(goal_state_vars_map[name]) + ', '
   g_string = g_string[:-2]
   g_string = "and(" + g_string + ")"
   print('g_g = ' + g_string)
