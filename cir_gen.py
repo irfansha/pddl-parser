@@ -264,65 +264,168 @@ def generate_cir(domain, problem):
 
 # Exists block:
 #-------------------------------------------------------------------------------------------
-def exists_block_print(state_vars, k):
+def exists_block_print(state_vars, k, var_map, var_count):
   exists_state_var_mat = []
+  exists_state_var_mat_int = []
   for i in range(k+1):
     exists_state_var_list = []
+    exists_state_var_list_int = []
     for j in range(len(state_vars)):
       exists_state_var_list.append('S_' + str(i) + '_' + str(j+1))
+      if 'S_' + str(i) + '_' + str(j+1) not in var_map:
+        var_count += 1
+        var_map['S_' + str(i) + '_' + str(j+1)] = var_count
+      exists_state_var_list_int.append(str(var_map['S_' + str(i) + '_' + str(j+1)]))
     exists_state_var_mat.append(exists_state_var_list)
+    exists_state_var_mat_int.append(exists_state_var_list_int)
 
+  #print(var_map)
   exists_string = ''
   for exists_state_var_list in exists_state_var_mat:
     exists_string += ', '.join(exists_state_var_list) + ', '
   exists_string = exists_string[:-2]
-  print('exists('+ exists_string + ')')
+  print('# exists('+ exists_string + ')')
+  print("\n")
+  exists_int_string = ''
+  for exists_state_var_list_int in exists_state_var_mat_int:
+    exists_int_string += ', '.join(exists_state_var_list_int) + ', '
+  exists_int_string = exists_int_string[:-2]
+  print('exists('+ exists_int_string + ')')
+  return var_count
 #-------------------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------------------
-def forall_block_print(state_vars, action_vars, untouched_prop_gates):
+def forall_block_print(state_vars, action_vars, untouched_prop_gates, var_map, var_count):
   forall_string = ''
+  forall_int_string = ''
+
+  # action vars in forall block:
   for action_var in action_vars:
+    if action_var not in var_map:
+      var_count += 1
+      var_map[action_var] = var_count
     forall_string += action_var + ', '
+    forall_int_string += str(var_map[action_var]) + ', '
+
+  # Additional variables for untouched propagation gates:
   for prop_gate in untouched_prop_gates:
+    if prop_gate not in var_map:
+      var_count += 1
+      var_map[prop_gate] = var_count
     forall_string += prop_gate + ', '
+    forall_int_string += str(var_map[prop_gate]) + ', '
+
   for i in range(1,3):
     for state_var in state_vars:
+      if state_var + str(i) not in var_map:
+        var_count += 1
+        var_map[state_var + str(i)] = var_count
       forall_string += state_var + str(i) + ', '
+      forall_int_string += str(var_map[state_var + str(i)]) + ', '
+
   forall_string = forall_string[:-2]
-  print('forall(' + forall_string + ')')
+  forall_int_string = forall_int_string[:-2]
+  #print(var_map, var_count)
+  print('# forall(' + forall_string + ')')
+  print("\n")
+  print('forall(' + forall_int_string + ')')
+  return var_count
 #-------------------------------------------------------------------------------------------
 
 
 #-------------------------------------------------------------------------------------------
-def forall_condition_print(state_vars, k):
+def forall_condition_print(state_vars, k, var_map, var_count):
   g_eq_name = "g_eq_"
   g_eq_conjunction_name_list = []
+  g_eq_conjunction_name_int_list = []
   for i in range(k):
     g_eq_name_list = []
+    g_eq_name_int_list = []
     for j in range(len(state_vars)):
       temp_name = str(i) + '_' + str(j+1)
       g_eq_name_list.append(g_eq_name + "1_" + temp_name + '_f')
-      print(g_eq_name + "1_" + temp_name +  "_f = or(-" + state_vars[j] + str(1) + ', S_' + temp_name + ")")
+
+      if g_eq_name + "1_" + temp_name + '_f' not in var_map:
+        var_count += 1
+        var_map[g_eq_name + "1_" + temp_name + '_f'] = var_count
+      g_eq_name_int_list.append(str(var_map[g_eq_name + "1_" + temp_name + '_f']))
+
+      print("# " + g_eq_name + "1_" + temp_name +  "_f = or(-" + state_vars[j] + str(1) + ', S_' + temp_name + ")")
+      print(str(var_map[g_eq_name + "1_" + temp_name +  "_f"]) +" = or(-" + str(var_map[state_vars[j] + str(1)]) + ', ' + str(var_map['S_' + temp_name])+ ")")
+
       g_eq_name_list.append(g_eq_name + "1_" + temp_name + '_s')
-      print(g_eq_name + "1_" + temp_name +  "_s = or(" + state_vars[j] + str(1) + ', -S_' + temp_name + ")")
+      if g_eq_name + "1_" + temp_name + '_s' not in var_map:
+        var_count += 1
+        var_map[g_eq_name + "1_" + temp_name + '_s'] = var_count
+
+      g_eq_name_int_list.append(str(var_map[g_eq_name + "1_" + temp_name + '_s']))
+
+      print("# " + g_eq_name + "1_" + temp_name +  "_s = or(" + state_vars[j] + str(1) + ', -S_' + temp_name + ")")
+      print(str(var_map[g_eq_name + "1_" + temp_name +  "_s"]) +" = or(" + str(var_map[state_vars[j] + str(1)]) + ', ' + str(-var_map['S_' + temp_name])+ ")")
+      print("\n")
+
     g_eq_tuple_name = ', '.join(g_eq_name_list)
-    print(g_eq_name + "1_" + str(i) + " = and(" + g_eq_tuple_name + ")")
+    g_eq_tuple_int_name = ', '.join(g_eq_name_int_list)
+
+    print("#" + g_eq_name + "1_" + str(i) + " = and(" + g_eq_tuple_name + ")")
+    if g_eq_name + "1_" + str(i) not in var_map:
+      var_count += 1
+      var_map[g_eq_name + "1_" + str(i)] = var_count
+    print(str(var_map[g_eq_name + "1_" + str(i)]) + " = and(" + g_eq_tuple_int_name + ")")
     print("\n")
+
     g_eq_name_list = []
+    g_eq_name_int_list = []
+
     for j in range(len(state_vars)):
       temp_name = str(i+1) + '_' + str(j+1)
       g_eq_name_list.append(g_eq_name + "2_" + temp_name + '_f')
-      print(g_eq_name + "2_" + temp_name +  "_f = or(-" + state_vars[j] + str(2) + ', S_' + temp_name + ")")
-      g_eq_name_list.append(g_eq_name + "2_" + temp_name + '_s')
-      print(g_eq_name + "2_" + temp_name +  "_s = or(" + state_vars[j] + str(2) + ', -S_' + temp_name + ")")
-    g_eq_tuple_name = ', '.join(g_eq_name_list)
-    print(g_eq_name + "2_" + str(i+1) + " = and(" + g_eq_tuple_name + ")")
-    g_eq_conjunction_name_list.append("g_eq_and_1_" + str(i) + "_2_" + str(i+1))
-    print("g_eq_and_1_" + str(i) + "_2_" + str(i+1) + " = and(" + g_eq_name + "1_" + str(i) + ", " +g_eq_name + "2_" + str(i+1) + ")")
-    print("\n")
-  print("g_eq_cond = or(" + ', '.join(g_eq_conjunction_name_list) + ")")
+      if g_eq_name + "2_" + temp_name + '_f' not in var_map:
+        var_count += 1
+        var_map[g_eq_name + "2_" + temp_name + '_f'] = var_count
+      g_eq_name_int_list.append(str(var_map[g_eq_name + "2_" + temp_name + '_f']))
 
+      print('# ' + g_eq_name + "2_" + temp_name +  "_f = or(-" + state_vars[j] + str(2) + ', S_' + temp_name + ")")
+
+      print(str(var_map[g_eq_name + "2_" + temp_name +  "_f"]) + "= or(-" + str(var_map[state_vars[j] + str(2)]) + ', ' + str(var_map['S_' + temp_name]) + ")")
+
+      g_eq_name_list.append(g_eq_name + "2_" + temp_name + '_s')
+      if g_eq_name + "2_" + temp_name + '_s' not in var_map:
+        var_count += 1
+        var_map[g_eq_name + "2_" + temp_name + '_s'] = var_count
+      g_eq_name_int_list.append(str(var_map[g_eq_name + "2_" + temp_name + '_s']))
+
+      print("# " + g_eq_name + "2_" + temp_name +  "_s = or(" + state_vars[j] + str(2) + ', -S_' + temp_name + ")")
+      print(str(var_map[g_eq_name + "2_" + temp_name +  "_s"]) + " = or(" + str(var_map[state_vars[j] + str(2)]) + ', ' + str(-var_map['S_' + temp_name]) + ")")
+      print("\n")
+
+    g_eq_tuple_name = ', '.join(g_eq_name_list)
+    g_eq_tuple_int_name = ', '.join(g_eq_name_int_list)
+    print("#" + g_eq_name + "2_" + str(i+1) + " = and(" + g_eq_tuple_name + ")")
+
+    if g_eq_name + "2_" + str(i+1) not in var_map:
+      var_count += 1
+      var_map[g_eq_name + "2_" + str(i+1)] = var_count
+
+    print(str(var_map[g_eq_name + "2_" + str(i+1)]) + " = and(" + g_eq_tuple_int_name + ")")
+    print("\n")
+
+    g_eq_conjunction_name_list.append("g_eq_and_1_" + str(i) + "_2_" + str(i+1))
+    if "g_eq_and_1_" + str(i) + "_2_" + str(i+1) not in var_map:
+      var_count += 1
+      var_map["g_eq_and_1_" + str(i) + "_2_" + str(i+1)] = var_count
+
+    g_eq_conjunction_name_int_list.append(str(var_map["g_eq_and_1_" + str(i) + "_2_" + str(i+1)]))
+
+
+    print("# g_eq_and_1_" + str(i) + "_2_" + str(i+1) + " = and(" + g_eq_name + "1_" + str(i) + ", " +g_eq_name + "2_" + str(i+1) + ")")
+    print(str(var_map["g_eq_and_1_" + str(i) + "_2_" + str(i+1)]) + " = and(" + str(var_map[g_eq_name + "1_" + str(i)]) + ", " + str(var_map[g_eq_name + "2_" + str(i+1)]) + ")")
+    print("\n")
+  print("# g_eq_cond = or(" + ', '.join(g_eq_conjunction_name_list) + ")")
+  var_count += 1
+  var_map['g_eq_cond'] = var_count
+  print(str(var_map["g_eq_cond"]) + "= or(" + ', '.join(g_eq_conjunction_name_int_list) + ")")
+  return var_count
 #-------------------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------------------
@@ -330,39 +433,62 @@ def forall_condition_print(state_vars, k):
 
 # prints cnf format to stdout:
 #-------------------------------------------------------------------------------------------
-def print_cir(gates, action_vars, state_vars,k):
+def print_cir(gates, action_vars, state_vars,k, var_map):
+  var_count = 0
   # Heading
   print("#qcir_intermediate_planning_format20")
   # Quantifier blocks:
   print("\n")
   # Exists block:
-  exists_block_print(state_vars, k)
+  var_count = exists_block_print(state_vars, k, var_map, var_count)
+  #print(var_map, var_count)
   print("\n")
   # Forall block,
   # assuming the transition is from state_vars1 -> state_vars:
-  forall_block_print(state_vars, action_vars, gates[4])
+  var_count = forall_block_print(state_vars, action_vars, gates[4], var_map, var_count)
   print("\n")
   '''
   g_forall_comp_name = 'g_forall_comp_name'
   for i in range(k+1):
   '''
   # Output gate specification:
-  print('output(g_o)')
+  print('# output(g_o)')
+  print("\n")
+
+  var_count += 1
+  var_map['g_o'] = var_count
+  print('output(' + str(var_map['g_o']) + ')')
   print("\n")
 
   # Initial gate, g_i:
   initial_gate = gates.pop(0)
   #print(initial_gate)
   i_string = ''
+  i_int_string = ''
+
   for i in range(len(initial_gate)):
     sign, name = extract_var(initial_gate[i])
+    if 'S_0_' + str(i+1) not in var_map:
+      var_count += 1
+      var_map['S_0_' + str(i+1)] = var_count
     if sign:
       i_string += 'S_0_' + str(i+1) + ', '
+      i_int_string += str(var_map['S_0_' + str(i+1)]) + ', '
     else:
       i_string += '-S_0_' + str(i+1) + ', '
+      i_int_string += str(-var_map['S_0_' + str(i+1)]) + ', '
+
   i_string = i_string[:-2]
   i_string = "and(" + i_string + ")"
-  print('g_i = ' + i_string)
+  print('# g_i = ' + i_string)
+  print("\n")
+
+  var_count += 1
+  var_map['g_i'] = var_count
+
+  i_int_string = i_int_string[:-2]
+  i_int_string = "and(" + i_int_string + ")"
+  print(str(var_map['g_i']) + ' = ' + i_int_string)
   print("\n")
 
 
@@ -374,15 +500,32 @@ def print_cir(gates, action_vars, state_vars,k):
   goal_gate = gates.pop(0)
   #print(goal_gate)
   g_string = ''
+  g_int_string = ''
+
   for g_gate in goal_gate:
     sign, name = extract_var(g_gate)
+    if 'S_' + str(k) + '_' + str(goal_state_vars_map[name]) not in var_map:
+      var_count += 1
+      var_map['S_' + str(k) + '_' + str(goal_state_vars_map[name])] = var_count
+
     if sign:
       g_string += 'S_' + str(k) + '_' + str(goal_state_vars_map[name]) + ', '
+      g_int_string += str(var_map['S_' + str(k) + '_' + str(goal_state_vars_map[name])]) + ', '
     else:
       g_string += '-S_' + str(k) + '_' + str(goal_state_vars_map[name]) + ', '
+      g_int_string += str(-var_map['S_' + str(k) + '_' + str(goal_state_vars_map[name])]) + ', '
+
   g_string = g_string[:-2]
   g_string = "and(" + g_string + ")"
-  print('g_g = ' + g_string)
+  print('# g_g = ' + g_string)
+  print("\n")
+
+  var_count += 1
+  var_map['g_g'] = var_count
+
+  g_int_string = g_int_string[:-2]
+  g_int_string = "and(" + g_int_string + ")"
+  print(str(var_map['g_g']) + ' = ' + g_int_string)
   print("\n")
 
 
@@ -405,8 +548,12 @@ def print_cir(gates, action_vars, state_vars,k):
   for action_var in action_vars:
     g_t_if_count = g_t_if_count + 1
     g_t_if_string = "and(" + action_var + ")"
-    print(g_t_if_name + str(g_t_if_count) + " = " + g_t_if_string)
-  print("\n")
+    print("# " + g_t_if_name + str(g_t_if_count) + " = " + g_t_if_string)
+    if g_t_if_name + str(g_t_if_count) not in var_map:
+      var_count += 1
+      var_map[g_t_if_name + str(g_t_if_count)] = var_count
+    print(str(var_map[g_t_if_name + str(g_t_if_count)]) + " = and(" + str(var_map[action_var]) + ")")
+    print("\n")
 
   # Then gates, g_t_then_*:
   g_t_then_name = "g_t_then_"
@@ -415,8 +562,22 @@ def print_cir(gates, action_vars, state_vars,k):
   for action_gate in action_gates:
     g_t_then_count = g_t_then_count + 1
     g_t_then_string = ', '.join(action_gate[1])
+    g_t_then_int_string = ''
+    for then_var in action_gate[1]:
+      sign, name = extract_var(then_var)
+      if sign:
+        g_t_then_int_string += str(var_map[name]) + ', '
+      else:
+        g_t_then_int_string += str(-var_map[name]) + ', '
+    g_t_then_int_string = g_t_then_int_string[:-2]
+
     g_t_then_string = "and(" + g_t_then_string + ")"
-    print(g_t_then_name + str(g_t_then_count) + " = " + g_t_then_string)
+    print("# " + g_t_then_name + str(g_t_then_count) + " = " + g_t_then_string)
+    if g_t_then_name + str(g_t_then_count) not in var_map:
+      var_count += 1
+      var_map[g_t_then_name + str(g_t_then_count)] = var_count
+    print(str(var_map[g_t_then_name + str(g_t_then_count)]) + " = and(" + g_t_then_int_string + ")")
+    print("\n")
   print("\n")
 
   # Untouched propagation gates, g_t_prop_*:
@@ -426,8 +587,23 @@ def print_cir(gates, action_vars, state_vars,k):
   for prop_gate in untouch_prop_gates:
     g_t_prop_count = g_t_prop_count + 1
     g_t_prop_string = ', '.join(prop_gate)
+    g_t_prop_int_string = ''
+    for prop_var in prop_gate:
+      sign, name = extract_var(prop_var)
+      if sign:
+        g_t_prop_int_string += str(var_map[name]) + ', '
+      else:
+        g_t_prop_int_string += str(-var_map[name]) + ', '
+    g_t_prop_int_string = g_t_prop_int_string[:-2]
+
     g_t_prop_string = "or(" + g_t_prop_string + ")"
-    print(g_t_prop_name + str(g_t_prop_count) + " = " + g_t_prop_string)
+    print("# " + g_t_prop_name + str(g_t_prop_count) + " = " + g_t_prop_string)
+
+    if g_t_prop_name + str(g_t_prop_count) not in var_map:
+      var_count += 1
+      var_map[g_t_prop_name + str(g_t_prop_count)] = var_count
+    print(str(var_map[g_t_prop_name + str(g_t_prop_count)]) + " = or(" + g_t_prop_int_string + ")")
+    print("\n")
     #print(prop_gate)
   print("\n")
 
@@ -437,60 +613,117 @@ def print_cir(gates, action_vars, state_vars,k):
   for action_var in action_vars:
     g_t_if_then_count = g_t_if_then_count + 1
     g_t_if_then_string = "or(-" + g_t_if_name + str(g_t_if_then_count) + ", " + g_t_then_name + str(g_t_if_then_count) + ")"
-    print(g_t_if_then_name + str(g_t_if_then_count) + " = " + g_t_if_then_string)
+    print("# " + g_t_if_then_name + str(g_t_if_then_count) + " = " + g_t_if_then_string)
+    if g_t_if_then_name + str(g_t_if_then_count) not in var_map:
+      var_count += 1
+      var_map[g_t_if_then_name + str(g_t_if_then_count)] = var_count
+    print(str(var_map[g_t_if_then_name + str(g_t_if_then_count)]) + " = or(-" + str(var_map[g_t_if_name + str(g_t_if_then_count)]) + ", " + str(var_map[g_t_then_name + str(g_t_if_then_count)]) + ")")
   print("\n")
 
   # AmoAlo gate, g_t_amoalo:
   amoalo_gate_then_count = 0
   for i in range(len(action_vars)):
     temp_string = ''
+    temp_int_string = ''
     for j in range(len(action_vars)):
       if i != j:
         temp_string += g_t_if_name + str(j+1) + ", "
+        temp_int_string += str(var_map[g_t_if_name + str(j+1)]) + ", "
+
     temp_string = temp_string[:-2]
+    temp_int_string = temp_int_string[:-2]
+
     amoalo_gate_then_count += 1
-    print("g_t_amoalo_then_"+ str(amoalo_gate_then_count) +   " = or(" + temp_string + ")")
+    print("# g_t_amoalo_then_"+ str(amoalo_gate_then_count) +   " = or(" + temp_string + ")")
+    if "g_t_amoalo_then_"+ str(amoalo_gate_then_count) not in var_map:
+      var_count += 1
+      var_map["g_t_amoalo_then_"+ str(amoalo_gate_then_count)] = var_count
+    print(str(var_map["g_t_amoalo_then_"+ str(amoalo_gate_then_count)]) +   " = or(" + temp_int_string + ")")
+    print("\n")
   #print("g_t_amoalo = amoalo(" + if_var_string + ")")
   print("\n")
 
   amoalo_gate_if_then_not_count = 0
   for i in range(len(action_vars))  :
-    print("g_t_amoalo_if_then_not_" + str(i+1) + " = or(-g_t_if_" + str(i+1) + ", -g_t_amoalo_then_" + str(i+1) + ")")
+    print("# g_t_amoalo_if_then_not_" + str(i+1) + " = or(-g_t_if_" + str(i+1) + ", -g_t_amoalo_then_" + str(i+1) + ")")
+    if "g_t_amoalo_if_then_not_" + str(i+1) not in var_map:
+      var_count += 1
+      var_map["g_t_amoalo_if_then_not_" + str(i+1)] = var_count
+    print(str(var_map["g_t_amoalo_if_then_not_" + str(i+1)]) + " = or(-" + str(var_map["g_t_if_" + str(i+1)]) + ", -" + str(var_map["g_t_amoalo_then_" + str(i+1)]) + ")")
   print("\n")
 
   # Alo gate:
   if_var_string = ''
+  if_var_int_string = ''
+
   for i in range(len(action_vars)):
       if_var_string += g_t_if_name + str(i+1) + ", "
+      if_var_int_string += str(var_map[g_t_if_name + str(i+1)]) + ", "
+
   if_var_string = if_var_string[:-2]
-  print("g_t_alo = or(" + if_var_string + ")")
+  if_var_int_string = if_var_int_string[:-2]
+
+  print("# g_t_alo = or(" + if_var_string + ")")
+
+  var_count += 1
+  var_map['g_t_alo'] = var_count
+
+  print(str(var_map['g_t_alo']) + " = or(" + if_var_int_string + ")")
   print("\n")
+
 
   # Final amoalo gate:
   amoalo_string = ''
+  amoalo_int_string = ''
+
   for i in range(len(action_vars)):
     amoalo_string += "g_t_amoalo_if_then_not_" + str(i+1) + ', '
-  print("g_t_amoalo = and(" + amoalo_string + "g_t_alo)")
+    if "g_t_amoalo_if_then_not_" + str(i+1) not in var_map:
+      var_count += 1
+      var_map["g_t_amoalo_if_then_not_" + str(i+1)] = var_count
+    amoalo_int_string += str(var_map["g_t_amoalo_if_then_not_" + str(i+1)]) + ', '
+
+  print("# g_t_amoalo = and(" + amoalo_string + "g_t_alo)")
+
+  var_count += 1
+  var_map['g_t_amoalo'] = var_count
+  print(str(var_map["g_t_amoalo"]) + " = and(" + amoalo_int_string + str(var_map["g_t_alo"]) + ")")
   print("\n")
 
   # Final transtion gate, g_t_final
   if_then_var_string = ''
+  if_then_var_int_string = ''
   for i in range(len(action_vars)):
       if_then_var_string += g_t_if_then_name + str(i+1) + ", "
+      if_then_var_int_string += str(var_map[g_t_if_then_name + str(i+1)]) + ", "
   #if_then_var_string = if_then_var_string[:-2]
 
   # for untouched prop:
   untouched_prop_var_string = ''
+  untouched_prop_var_int_string = ''
   for i in range(len(untouch_prop_gates)):
-      untouched_prop_var_string += g_t_prop_name + str(i+1) + ", "
-  print("g_t_final = and(" + if_then_var_string + untouched_prop_var_string + "g_t_amoalo)")
+    untouched_prop_var_string += g_t_prop_name + str(i+1) + ", "
+    untouched_prop_var_int_string += str(var_map[g_t_prop_name + str(i+1)]) + ", "
+
+  print("# g_t_final = and(" + if_then_var_string + untouched_prop_var_string + "g_t_amoalo)")
+
+  var_count += 1
+  var_map["g_t_final"] = var_count
+  print(str(var_map["g_t_final"]) + " = and(" + if_then_var_int_string + untouched_prop_var_int_string + str(var_map["g_t_amoalo"]) + ")")
   print("\n")
 
+
   # If the conditions in forall quantifier then transition:
-  forall_condition_print(state_vars, k)
-  print("g_cond_t_final = or(-g_eq_cond, g_t_final)")
+  var_count = forall_condition_print(state_vars, k, var_map, var_count)
+  print("\n")
+  print("# g_cond_t_final = or(-g_eq_cond, g_t_final)")
+  var_count += 1
+  var_map['g_cond_t_final'] = var_count
+  print(str(var_map['g_cond_t_final']) + ' = or(-' + str(var_map['g_eq_cond']) + ", " + str(var_map['g_t_final']) + ")")
+  print("\n")
   # Output gate, g_o:
-  print("g_o = and(g_i, g_g, g_cond_t_final)")
+  print("# g_o = and(g_i, g_g, g_cond_t_final)")
+  print(str(var_map['g_o']) + " = and(" + str(var_map['g_i']) + ', ' + str(var_map['g_g']) + ", " + str(var_map['g_cond_t_final']) + ")")
 #-------------------------------------------------------------------------------------------
 
 
@@ -501,4 +734,5 @@ if __name__ == '__main__':
   problem = sys.argv[2]
   k = int(sys.argv[3])
   gates, action_vars, state_vars = generate_cir(domain, problem)
-  print_cir(gates, action_vars, state_vars,k)
+  var_map = {}
+  print_cir(gates, action_vars, state_vars,k, var_map)
