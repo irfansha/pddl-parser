@@ -294,26 +294,39 @@ def exists_block_print(state_vars, k, var_map, var_count):
   return var_count
 #-------------------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------------------
-def forall_block_print(state_vars, action_vars, untouched_prop_gates, var_map, var_count):
-  forall_string = ''
-  forall_int_string = ''
+def exists_extra_print(action_vars, untouched_prop_gates, var_map, var_count):
+  exists_extra_string = ''
+  exists_extra_int_string = ''
 
   # action vars in forall block:
   for action_var in action_vars:
     if action_var not in var_map:
       var_count += 1
       var_map[action_var] = var_count
-    forall_string += action_var + ', '
-    forall_int_string += str(var_map[action_var]) + ', '
+    exists_extra_string += action_var + ', '
+    exists_extra_int_string += str(var_map[action_var]) + ', '
 
   # Additional variables for untouched propagation gates:
   for prop_gate in untouched_prop_gates:
     if prop_gate not in var_map:
       var_count += 1
       var_map[prop_gate] = var_count
-    forall_string += prop_gate + ', '
-    forall_int_string += str(var_map[prop_gate]) + ', '
+    exists_extra_string += prop_gate + ', '
+    exists_extra_int_string += str(var_map[prop_gate]) + ', '
+
+  exists_extra_string = exists_extra_string[:-2]
+  exists_extra_int_string = exists_extra_int_string[:-2]
+  #print(var_map, var_count)
+  print('# exists(' + exists_extra_string + ')')
+  print('exists(' + exists_extra_int_string + ')')
+  print("\n")
+  return var_count
+
+
+#-------------------------------------------------------------------------------------------
+def forall_block_print(state_vars, var_map, var_count):
+  forall_string = ''
+  forall_int_string = ''
 
   for i in range(1,3):
     for state_var in state_vars:
@@ -443,10 +456,15 @@ def print_cir(gates, action_vars, state_vars,k, var_map):
   var_count = exists_block_print(state_vars, k, var_map, var_count)
   #print(var_map, var_count)
   print("\n")
+
   # Forall block,
   # assuming the transition is from state_vars1 -> state_vars:
-  var_count = forall_block_print(state_vars, action_vars, gates[4], var_map, var_count)
+  var_count = forall_block_print(state_vars, var_map, var_count)
   print("\n")
+
+  var_count = exists_extra_print(action_vars, gates[4], var_map, var_count)
+
+
   '''
   g_forall_comp_name = 'g_forall_comp_name'
   for i in range(k+1):
@@ -736,3 +754,4 @@ if __name__ == '__main__':
   gates, action_vars, state_vars = generate_cir(domain, problem)
   var_map = {}
   print_cir(gates, action_vars, state_vars,k, var_map)
+  #print(var_map)
