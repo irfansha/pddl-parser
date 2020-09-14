@@ -12,6 +12,7 @@ Todos:
 
 
 from PDDL import PDDL_Parser
+from action import Action
 
 # state extraction from pddl domain and problem:
 #-------------------------------------------------------------------------------------------
@@ -47,7 +48,7 @@ def constraints(domain, problem):
   for act in ground_actions:
     action_list.append(act)
     #print(act)
-
+  action_list.append(Action('noop', (), [], [], [], []))
   # Appending to one list:
   clause_list.append(initial_clauses)
   clause_list.append(goal_clauses)
@@ -244,6 +245,9 @@ def clause_gen(constraint_list, state_vars, k):
     act_imp_clauses.append(temp_act_imp_clauses)
     cond_prop_clauses.append(temp_cond_prop_clauses)
   #print(len(act_imp_clauses), len(cond_prop_clauses))
+  #for temp_step_clause in act_imp_clauses:
+  #  for temp_clause in temp_step_clause:
+  #    print(temp_clause)
   #print(cond_prop_clauses)
   return [initial_clauses, goal_clauses, act_imp_clauses, cond_prop_clauses]
 #-------------------------------------------------------------------------------------------
@@ -427,6 +431,7 @@ def generate_cnf(domain, problem, k):
   #print('Time: ' + str(time.time() - start_time) + 's')
   # initial, goal and actions clauses as a list of lists:
   clauses = clause_gen(constraint_list,state_vars, k)
+  #print(clauses)
   (integer_clauses,reverse_var_map,var_count) = make_clauses_integer(clauses)
   #print(reverse_var_map)
   complete_clauses, step_actions_list = complete_clauses_gen(integer_clauses)
@@ -444,6 +449,6 @@ if __name__ == '__main__':
   problem = sys.argv[2]
   k = int(sys.argv[3])
   cnf_list, reverse_var_map, var_count, step_actions_list = generate_cnf(domain, problem, k)
-  #print_cnf(cnf_list,var_count)
+  print_cnf(cnf_list,var_count)
   #for mp in reverse_var_map:
   #  print(mp,reverse_var_map[mp])
