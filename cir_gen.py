@@ -15,6 +15,25 @@ Todos:
 
 from PDDL import PDDL_Parser
 
+# XXX refining multiple parameters:
+#-------------------------------------------------------------------------------------------
+def refine_gate(unrefined_gate):
+  temp_refined_gate = []
+  for gate in unrefined_gate:
+    if (len(gate) <=2):
+      temp_refined_gate.append(gate)
+    else:
+      name = gate.pop(0)
+      count = 0
+      for var in gate:
+        count += 1
+        temp_refined_gate.append([name + '_' + str(count), var])
+  #print(temp_initial_gate)
+  return temp_refined_gate
+
+
+#-------------------------------------------------------------------------------------------
+
 # state extraction from pddl domain and problem:
 #-------------------------------------------------------------------------------------------
 '''
@@ -33,11 +52,22 @@ def constraints(domain, problem):
   state = parser.state
   # Initial state gate:
   initial_gate = list(state)
+  #initial_gate = refine_gate(initial_gate)
   #print(initial_gate)
 
   goal_pos = parser.positive_goals
   goal_not = parser.negative_goals
   goal_gate = [goal_pos, goal_not]
+  #goal_gate = [refine_gate(goal_pos), refine_gate(goal_not)]
+  #print(goal_gate)
+
+  #for act in parser.actions:
+  #  #print(act)
+  #  act.positive_preconditions = refine_gate(act.positive_preconditions)
+  #  act.negative_preconditions = refine_gate(act.negative_preconditions)
+  #  act.add_effects = refine_gate(act.add_effects)
+  #  act.del_effects = refine_gate(act.del_effects)
+  #  #print(act)
 
   action_list = []
   # Grounding process
